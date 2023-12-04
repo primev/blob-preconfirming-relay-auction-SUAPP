@@ -18,7 +18,7 @@ Now, clone this repo and install its dependencies (one of which is the `suave-vi
 **We recommend using node v20.10.0 and npm v10.2.3**:
 
 ```bash
-$ cd suapp-template
+$ cd build-a-suapp
 $ git submodule init # to initalize the forge-std lib
 $ git submodule update
 $ yarn
