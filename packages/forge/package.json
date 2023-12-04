@@ -1,0 +1,12 @@
+{
+    "name": "forge",
+    "version": "0.0.1",
+    "private": true,
+    "license": "MIT",
+    "author": "cryptowanderer",
+    "scripts": {
+      "build": "forge build",
+      "deploy": "./deploy"
+    },
+    "dependencies": {}
+  }

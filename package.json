@@ -1,0 +1,19 @@
+{
+    "name": "suapp",
+    "version": "0.0.1",
+    "private": true,
+    "workspaces": {
+      "packages": [
+        "packages/forge",
+        "packages/next"
+      ]
+    },
+    "scripts": {
+        "fe:dev": "yarn workspace next dev",
+        "fe:build": "yarn workspace next build",
+        "fe:start": "yarn workspace next start",
+        "fe:lint": "yarn workspace next lint",
+        "contracts:build": "yarn workspace forge build",
+        "contracts:deploy": "yarn workspace forge deploy"
+    }
+}
