@@ -22,7 +22,7 @@ $ cd build-a-suapp
 $ git submodule init # to initalize the forge-std lib
 $ git submodule update
 $ yarn
-$ cd packages/next $$ bun link viem
+$ cd packages/next && bun link viem
 ```
 
 You should now be able to compile (and deploy) your contracts with:
