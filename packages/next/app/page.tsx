@@ -1,6 +1,6 @@
 "use client";
-import React, { useEffect, useState } from 'react';
-import { createWalletClient, http } from 'viem';
+import React, { useState } from 'react';
+import { createWalletClient, http, serializeTransaction, hexToSignature, keccak256, parseGwei } from 'viem';
 import { suaveRigil } from 'viem/chains';
 import { TransactionRequestSuave, SuaveTxTypes } from '../node_modules/viem/chains/suave/types'
 import { deployedAddress } from '@/constants/addresses';
@@ -14,6 +14,9 @@ export default function Home() {
   const [contractState, setContractState] = useState('');
   const suaveUrl = 'http://localhost:8545';
   const provider = suaveRigil.newPublicClient(http(suaveUrl));
+
+  // needs to be set manually for CCRs using eth_sign method
+  var nonce = 0;
 
   const connectWallet = async () => {
       if (typeof window.ethereum !== 'undefined') {
@@ -45,63 +48,81 @@ export default function Home() {
     console.log(`Transaction hash: ${sendRes}`);
   }
 
+  // TODO: the issue with this approach is how to increment the nonce well
+  // if not specified, it causes errors like "already known" or "replacement transaction underpriced"
   const sendChangeState = async () => {
     const CCR: TransactionRequestSuave = {
       confidentialInputs: '0x',
-      kettleAddress: '0xB5fEAfbDD752ad52Afb7e1bD2E40432A485bBB7F', // Address of your local Kettle. Use 0x03493869959C866713C33669cA118E774A30A0E5 if on Rigil.
+      kettleAddress: '0xB5fEAfbDD752ad52Afb7e1bD2E40432A485bBB7F', // Use 0x03493869959C866713C33669cA118E774A30A0E5 on Rigil.
       to: deployedAddress,
-      gasPrice: 10000000000n, 
-      gas: 420000n,
+      gasPrice: parseGwei('0.0000000002'), 
+      gas: parseGwei('0.0002'),
       type: SuaveTxTypes.ConfidentialRequest, 
       chainId: 16813125, // chain id of local SUAVE devnet
       data: '0x6fd43e7c00000000000000000000000000000000000000000000000000000000', // calling example()
+      nonce
     };
     if (account) {
       const wallet = createWalletClient({ 
         account, 
-        chain: suaveRigil,
         transport: http(suaveUrl)
       });
-      const sendRes = await wallet.sendTransaction(CCR);
-      console.log(`Transaction hash: ${sendRes}`);
+      // We use the unsafe eth_sign method here due to the lack of support for CCR tx types in viem
+      // this requires users to enable this option in MetaMask's Advanced settings
+      // it is not a long term solution
+      const serialized = serializeTransaction(CCR);
+      const serializedHash = keccak256(serialized);
+      const hexSignature = await (window as any).ethereum.request({ method: 'eth_sign', params: [account, serializedHash] });
+      const signature = hexToSignature(hexSignature);
+      const serializedSignedTx = serializeTransaction(CCR, signature);
+      const hash = await wallet.sendRawTransaction({
+          serializedTransaction: serializedSignedTx as `0x${string}`
+      });
+      console.log(`Transaction hash: ${hash}`);
+      nonce++;
     }
   }
 
   const sendNotChangeState = async () => {
     const CCR: TransactionRequestSuave = {
       confidentialInputs: '0x',
-      kettleAddress: '0xB5fEAfbDD752ad52Afb7e1bD2E40432A485bBB7F', // Address of your local Kettle. Use 0x03493869959C866713C33669cA118E774A30A0E5 if on Rigil.
+      kettleAddress: '0xB5fEAfbDD752ad52Afb7e1bD2E40432A485bBB7F',
       to: deployedAddress,
-      gasPrice: 10000000000n, 
-      gas: 420000n,
+      gasPrice: parseGwei('0.0000000002'), 
+      gas: parseGwei('0.0002'),
       type: SuaveTxTypes.ConfidentialRequest, 
-      chainId: 16813125, // chain id of local SUAVE devnet
+      chainId: 16813125,
       data: '0xc0473c8100000000000000000000000000000000000000000000000000000000', // calling nilExample()
+      nonce
     };
     if (account) {
       const wallet = createWalletClient({ 
         account, 
-        chain: suaveRigil,
         transport: http(suaveUrl)
       });
-      const sendRes = await wallet.sendTransaction(CCR);
-      console.log(`Transaction hash: ${sendRes}`);
+      const serialized = serializeTransaction(CCR);
+      const serializedHash = keccak256(serialized);
+      const hexSignature = await (window as any).ethereum.request({ method: 'eth_sign', params: [account, serializedHash] });
+      const signature = hexToSignature(hexSignature);
+      const serializedSignedTx = serializeTransaction(CCR, signature);
+      const hash = await wallet.sendRawTransaction({
+          serializedTransaction: serializedSignedTx as `0x${string}`
+      });
+      console.log(`Transaction hash: ${hash}`);
+      nonce++;
     }
   }
 
-  useEffect(() => {
-    const fetchState = async () => {
-      const data = await provider.readContract({
-        address: deployedAddress,
-        abi,
-        functionName: 'getState',
-      });
-      const toDisplay = (data as any).toString();
-      setContractState(toDisplay);
-    };
-
-    fetchState();
-  }, [contractState]);
+  const fetchState = async () => {
+    const data = await provider.readContract({
+      address: deployedAddress,
+      abi,
+      functionName: 'getState',
+    });
+    const toDisplay = (data as any).toString();
+    console.log(toDisplay);
+    setContractState(toDisplay);
+  };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
@@ -180,7 +201,12 @@ export default function Home() {
                 </div>
               </div>
               <div>
-                <p>Contract state: <b>{contractState}</b></p>
+              <button 
+                  className='mt-4 border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30'
+                  onClick={() => fetchState()}
+                  >
+                    State: {contractState}
+                  </button>
               </div>
             </div>
           )}
