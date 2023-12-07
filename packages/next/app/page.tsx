@@ -2,35 +2,37 @@
 import React, { useState, useEffect } from 'react';
 import { custom, formatEther, encodeFunctionData, Address, WalletClient, Transport, Account, PrivateKeyAccount } from 'viem';
 import { suaveRigil } from 'viem/chains';
-import { TransactionRequestSuave, SuaveTxTypes } from '../node_modules/viem/chains/suave/types'
+import { TransactionRequestSuave, TransactionReceiptSuave, SuaveTxTypes } from '../node_modules/viem/chains/suave/types'
 import { deployedAddress } from '@/constants/addresses';
 import OnChainState from '../../forge/out/OnChainState.sol/OnChainState.json';
 import Header from '@/components/Header';
 import Links from '@/components/Links';
 
-// TODO: this should be exported from suave-viem
-// this is just here so we can use code suggestions in development
-type SuaveWallet<
-  TTransport extends Transport = Transport,
-  TAccount extends Account = PrivateKeyAccount // TODO: should be PrivateKeyAccount | JsonRpcAccount
-> = WalletClient<
-  TTransport,
-  typeof suaveRigil,
-  TAccount
->;
+
+// TODO: (for Brock) these types should be exported from suave-viem
+type SuaveWallet = ReturnType<typeof suaveRigil.newWallet>;
+type SuaveProvider = ReturnType<typeof suaveRigil.newPublicClient>;
 
 export default function Home() {
   const [suaveWallet, setSuaveWallet] = useState<SuaveWallet>();
   const [balance, setBalance] = useState<string>();
-  const [provider, setProvider] = useState<any>()
-  const [hash, setHash] = useState('')
+  const [provider, setProvider] = useState<SuaveProvider>();
+  const [hash, setHash] = useState('');
   const [contractState, setContractState] = useState('');
+  const [pendingReceipt, setPendingReceipt] = useState<Promise<any>>();
+  const [receivedReceipt, setReceivedReceipt] = useState<TransactionReceiptSuave>();
 
   useEffect(() => {
     if (provider) {
       fetchBalance();
     }
-  }, [suaveWallet, hash]);
+    if (pendingReceipt) {
+      pendingReceipt.then((receipt) => {
+        setReceivedReceipt(receipt);
+        setPendingReceipt(undefined);
+      });
+    }
+  }, [suaveWallet, hash, pendingReceipt]);
 
   const connectWallet = async () => {
     const ethereum = window.ethereum
@@ -52,7 +54,11 @@ export default function Home() {
   };
 
   const fetchBalance = async () => {
-    const balanceFetched = await provider.getBalance({ address: suaveWallet?.account.address });
+    if (!provider || !suaveWallet) {
+      console.warn(`provider=${provider}\nsuaveWallet=${suaveWallet}`)
+      return
+    }
+    const balanceFetched = await provider.getBalance({ address: suaveWallet.account.address });
     setBalance(formatEther(balanceFetched));
   };
 
@@ -73,7 +79,11 @@ export default function Home() {
   }
 
   const sendExample = async () => {
-    const nonce = await provider.getTransactionCount({ address: suaveWallet?.account.address });
+    if (!provider || !suaveWallet) {
+      console.warn(`provider=${provider}\nsuaveWallet=${suaveWallet}`)
+      return
+    }
+    const nonce = await provider.getTransactionCount({ address: suaveWallet.account.address });
     const ccr: TransactionRequestSuave = {
       confidentialInputs: '0x',
       kettleAddress: '0xB5fEAfbDD752ad52Afb7e1bD2E40432A485bBB7F', // Use 0x03493869959C866713C33669cA118E774A30A0E5 on Rigil.
@@ -88,10 +98,9 @@ export default function Home() {
       }),
       nonce
     };
-    if (suaveWallet) {
-      const hash = await suaveWallet.sendTransaction(ccr);
-      console.log(`Transaction hash: ${hash}`);
-    }
+    const hash = await suaveWallet.sendTransaction(ccr);
+    console.log(`Transaction hash: ${hash}`);
+    setPendingReceipt(provider.waitForTransactionReceipt({ hash }));
   }
 
   const sendNilExample = async () => {
@@ -99,6 +108,10 @@ export default function Home() {
   }
 
   const fetchState = async () => {
+    if (!provider || !suaveWallet) {
+      console.warn(`provider=${provider}\nsuaveWallet=${suaveWallet}`)
+      return
+    }
     const data = await provider.readContract({
       address: deployedAddress,
       abi: OnChainState.abi,
@@ -115,7 +128,7 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <Header />
       <div className="flex flex-col gap-4 lg:flex-row w-[1024px]">
-        <div className="flex-1 border border-gray-300 bg-gradient-to-b from-zinc-200 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 lg:rounded-xl p-10">
+        <div className="flex-auto border border-gray-300 bg-gradient-to-b from-zinc-200 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 lg:rounded-xl p-10">
           <p className='text-2xl font-bold mt-4 mb-8'>
             Account Actions
           </p>
@@ -123,7 +136,7 @@ export default function Home() {
             {account ?
               <div>
                 <p><b>Connected Account:</b></p>
-                <p>{suaveWallet.account.address ? `${account.slice(0, 5)}...${account.slice(-5)}` : 'Not connected'}</p>
+                <code>{suaveWallet.account.address ? `${account.slice(0, 6)}...${account.slice(-4)}` : 'Not connected'}</code>
               </div> :
               <button
                 className='border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30'
@@ -147,12 +160,12 @@ export default function Home() {
           )}
         </div>
 
-        <div className="flex-1 border border-gray-300 bg-gradient-to-b from-zinc-200 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 lg:rounded-xl p-10">
+        <div className="flex-auto border border-gray-300 bg-gradient-to-b from-zinc-200 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 lg:rounded-xl p-10">
           <p className='text-2xl font-bold mt-4 mb-8'>
             Contract Actions
           </p>
-          <p>Your contract is deployed locally at:</p>
-          <p><b>{deployedAddress.slice(0, 5)}...{deployedAddress.slice(-5)}</b></p>
+          <p>Your contract is deployed locally at <code><b>{deployedAddress.slice(0, 6)}...{deployedAddress.slice(-4)}</b></code></p>
+
           {account && (
             <div>
               <div className='flex flex-col col-2 md:flex-row'>
@@ -188,9 +201,18 @@ export default function Home() {
         </div>
       </div>
 
-      <div>
-        <p>{hash}</p>
-      </div>
+      {hash && <div>
+        <p>Funded wallet at tx hash {hash}</p>
+      </div>}
+
+      {pendingReceipt && <div>
+        {/* TODO: animate the ellipsis */}
+        <p>Fund transaction {hash} pending...</p>
+      </div>}
+
+      {receivedReceipt && <div>
+        <p>Confidential Compute Request {receivedReceipt.transactionHash} <span style={{ color: receivedReceipt.status === 'success' ? '#0f0' : '#f00' }}>{receivedReceipt.status}</span></p>
+      </div>}
 
       <Links />
 
