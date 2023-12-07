@@ -32,8 +32,9 @@ export default function Home() {
     }
   }, [suaveWallet, hash]);
 
-  const connectWallet = async (ethereum: any) => {
-    if (ethereum !== 'undefined') {
+  const connectWallet = async () => {
+    const ethereum = window.ethereum
+    if (ethereum) {
       try {
         const [account] = await ethereum.request({ method: 'eth_requestAccounts' });
         setSuaveWallet(suaveRigil.newWallet({
@@ -126,7 +127,7 @@ export default function Home() {
               </div> :
               <button
                 className='border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30'
-                onClick={() => connectWallet(window.ethereum)}
+                onClick={connectWallet}
               >
                 Connect Wallet
               </button>}
@@ -138,7 +139,7 @@ export default function Home() {
             <div className="relative flex my-8">
               <button
                 className='border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30'
-                onClick={() => getFunds()}
+                onClick={getFunds}
               >
                 Get Funds
               </button>
@@ -159,7 +160,7 @@ export default function Home() {
                   <p className='text-l font-bold'>Use callback</p>
                   <button
                     className='mt-4 border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30'
-                    onClick={() => sendExample()}
+                    onClick={sendExample}
                   >
                     example()
                   </button>
@@ -168,7 +169,7 @@ export default function Home() {
                   <p className='text-l font-bold'>Change directly</p>
                   <button
                     className='mt-4 border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30'
-                    onClick={() => sendNilExample()}
+                    onClick={sendNilExample}
                   >
                     nilExample()
                   </button>
@@ -177,7 +178,7 @@ export default function Home() {
               <div>
                 <button
                   className='mt-4 border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30'
-                  onClick={() => fetchState()}
+                  onClick={fetchState}
                 >
                   State: {contractState}
                 </button>
