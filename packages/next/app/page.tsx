@@ -1,20 +1,21 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { custom, serializeTransaction, hexToSignature, keccak256, formatEther, encodeFunctionData, Client, Address, WalletClient, Transport, Account, CustomTransport, JsonRpcAccount, PrivateKeyAccount } from 'viem';
+import { custom, formatEther, encodeFunctionData, Address, WalletClient, Transport, Account, PrivateKeyAccount } from 'viem';
 import { suaveRigil } from 'viem/chains';
 import { TransactionRequestSuave, SuaveTxTypes } from '../node_modules/viem/chains/suave/types'
 import { deployedAddress } from '@/constants/addresses';
-import { abi } from '@/constants/abi';
+import OnChainState from '../../forge/out/OnChainState.sol/OnChainState.json';
 import Header from '@/components/Header';
 import Links from '@/components/Links';
 
 // TODO: this should be exported from suave-viem
+// this is just here so we can use code suggestions in development
 type SuaveWallet<
   TTransport extends Transport = Transport,
   TAccount extends Account = PrivateKeyAccount // TODO: should be PrivateKeyAccount | JsonRpcAccount
 > = WalletClient<
   TTransport,
-  any,
+  typeof suaveRigil,
   TAccount
 >;
 
@@ -38,7 +39,7 @@ export default function Home() {
         setSuaveWallet(suaveRigil.newWallet({
           jsonRpcAccount: account as Address,
           transport: custom(ethereum),
-        }))
+        }) as SuaveWallet)
         const suaveProvider = suaveRigil.newPublicClient(custom(ethereum));
         setProvider(suaveProvider);
       } catch (error) {
@@ -72,7 +73,7 @@ export default function Home() {
 
   const sendExample = async () => {
     const nonce = await provider.getTransactionCount({ address: suaveWallet?.account.address });
-    const CCR: TransactionRequestSuave = {
+    const ccr: TransactionRequestSuave = {
       confidentialInputs: '0x',
       kettleAddress: '0xB5fEAfbDD752ad52Afb7e1bD2E40432A485bBB7F', // Use 0x03493869959C866713C33669cA118E774A30A0E5 on Rigil.
       to: deployedAddress,
@@ -81,20 +82,13 @@ export default function Home() {
       type: SuaveTxTypes.ConfidentialRequest,
       chainId: 16813125, // chain id of local SUAVE devnet and Rigil
       data: encodeFunctionData({
-        abi,
+        abi: OnChainState.abi,
         functionName: 'example',
       }),
       nonce
     };
     if (suaveWallet) {
-      const serialized = serializeTransaction(CCR);
-      const serializedHash = keccak256(serialized);
-      const hexSignature = await window.ethereum.request({ method: 'eth_sign', params: [account, serializedHash] });
-      const signature = hexToSignature(hexSignature);
-      const serializedSignedTx = serializeTransaction(CCR, signature);
-      const hash = await suaveWallet.sendRawTransaction({
-        serializedTransaction: serializedSignedTx as `0x${string}`
-      });
+      const hash = await suaveWallet.sendTransaction(ccr);
       console.log(`Transaction hash: ${hash}`);
     }
   }
@@ -106,8 +100,8 @@ export default function Home() {
   const fetchState = async () => {
     const data = await provider.readContract({
       address: deployedAddress,
-      abi,
-      functionName: 'getState',
+      abi: OnChainState.abi,
+      functionName: 'state',
     });
     const toDisplay = (data as any).toString();
     console.log(toDisplay);
