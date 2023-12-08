@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { custom, formatEther, encodeFunctionData, Address, WalletClient, Transport, Account, PrivateKeyAccount } from 'viem';
+import { custom, formatEther, encodeFunctionData, Address } from 'viem';
 import { suaveRigil } from 'viem/chains';
 import { TransactionRequestSuave, TransactionReceiptSuave, SuaveTxTypes } from '../node_modules/viem/chains/suave/types'
 import { deployedAddress } from '@/constants/addresses';

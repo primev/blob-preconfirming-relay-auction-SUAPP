@@ -19,10 +19,9 @@ Now, clone this repo and install its dependencies (one of which is the `suave-vi
 
 ```bash
 $ cd build-a-suapp
-$ git submodule init # to initalize the forge-std lib
-$ git submodule update
 $ yarn
-$ cd packages/next && bun link viem
+$ cd packages/forge/ && forge install
+$ cd ../../packages/next && bun link viem
 ```
 
 You should now be able to compile (and deploy) your contracts with:
@@ -32,10 +31,8 @@ $ yarn contracts:build
 ```
 
 ```bash
-yarn contracts:deploy # will deploy whatever contracts you tell it to, if you have SUAVE running locally
+chmod +x packages/forge/deploy && yarn contracts:deploy # will deploy whatever contracts you tell it to, if you have SUAVE running locally
 ```
-
-If you run into a permissions error with this, try running `chmod + x packages/forge/deploy` from the root directory.
 
 You can start the frontend with:
 
