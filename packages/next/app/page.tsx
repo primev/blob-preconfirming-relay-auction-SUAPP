@@ -1,15 +1,13 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { custom, formatEther, encodeFunctionData, Address, WalletClient, Transport, Account, PrivateKeyAccount } from 'viem';
+import { custom, formatEther, encodeFunctionData, Address } from 'viem';
 import { suaveRigil } from 'viem/chains';
-import { TransactionRequestSuave, TransactionReceiptSuave, SuaveTxTypes } from '../node_modules/viem/chains/suave/types'
+import { TransactionRequestSuave, TransactionReceiptSuave } from 'viem/chains';
 import { deployedAddress } from '@/constants/addresses';
 import OnChainState from '../../forge/out/OnChainState.sol/OnChainState.json';
 import Header from '@/components/Header';
 import Links from '@/components/Links';
 
-
-// TODO: (for Brock) these types should be exported from suave-viem
 type SuaveWallet = ReturnType<typeof suaveRigil.newWallet>;
 type SuaveProvider = ReturnType<typeof suaveRigil.newPublicClient>;
 
@@ -90,7 +88,7 @@ export default function Home() {
       to: deployedAddress,
       gasPrice: 2000000000n,
       gas: 100000n,
-      type: SuaveTxTypes.ConfidentialRequest,
+      type: '0x43',
       chainId: 16813125, // chain id of local SUAVE devnet and Rigil
       data: encodeFunctionData({
         abi: OnChainState.abi,
