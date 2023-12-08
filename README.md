@@ -10,7 +10,7 @@ First, you need to build [`suave-viem`](https://github.com/flashbots/suave-viem)
 $ cd suave-viem
 $ bun install
 $ bun run build
-$ bun link
+$ cd src/ && bun link
 ```
 
 Now, clone this repo and install its dependencies (one of which is the `suave-viem` package we just built).
@@ -45,5 +45,8 @@ yarn fe:dev
 
 ## Notes
 
-1. No tests are included in `forge`, as it is not trivial to test new precompiles and different transaction types (i.e. CCRs) in Forge at this time.
-2. If you want to pirate ready-to-use typescript components for your frontend, we recommend you do so from [scaffold-eth2](https://github.com/scaffold-eth/scaffold-eth-2).
+1. Confidential Compute Requests (CCRs) on SUAVE do not work with wallets that implement the EIP-1193 Javascript API. Therefore, we use the unsafe `eth_sign` method to sign CCRs, which does work, but requires that you enable this functionality in wallets like MetaMask.
+    1. To do so in MetaMask, go to "Settings" -> "Advanced" -> scroll to bottom -> switch Eth_sign requests on.
+2. This template assumes that you are running SUAVE locally and have your browser wallet connected to `localhost:8545`.
+3. No tests are included in `forge`, as it is not trivial to test new precompiles and different transaction types (i.e. CCRs) in `forge` at this time.
+4. If you want to pirate ready-to-use typescript components for your frontend, we recommend you do so from [scaffold-eth2](https://github.com/scaffold-eth/scaffold-eth-2).
