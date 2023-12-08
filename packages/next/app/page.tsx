@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { custom, formatEther, encodeFunctionData, Address } from 'viem';
 import { suaveRigil } from 'viem/chains';
-import { TransactionRequestSuave, TransactionReceiptSuave } from 'viem/chains';
+import { TransactionRequestSuave, TransactionReceiptSuave } from 'viem';
+
 import { deployedAddress } from '@/constants/addresses';
 import OnChainState from '../../forge/out/OnChainState.sol/OnChainState.json';
 import Header from '@/components/Header';
@@ -17,7 +18,7 @@ export default function Home() {
   const [provider, setProvider] = useState<SuaveProvider>();
   const [hash, setHash] = useState('');
   const [contractState, setContractState] = useState('');
-  const [pendingReceipt, setPendingReceipt] = useState<Promise<any>>();
+  const [pendingReceipt, setPendingReceipt] = useState<Promise<TransactionReceiptSuave>>();
   const [receivedReceipt, setReceivedReceipt] = useState<TransactionReceiptSuave>();
 
   useEffect(() => {
@@ -26,6 +27,7 @@ export default function Home() {
     }
     if (pendingReceipt) {
       pendingReceipt.then((receipt) => {
+        console.log("txReceipt received:", receipt)
         setReceivedReceipt(receipt);
         setPendingReceipt(undefined);
       });
