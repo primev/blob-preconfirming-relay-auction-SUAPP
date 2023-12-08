@@ -30,6 +30,8 @@ export default function Home() {
       pendingReceipt.then((receipt) => {
         setReceivedReceipt(receipt);
         setPendingReceipt(undefined);
+        fetchBalance();
+        fetchState();
       });
     }
   }, [suaveWallet, hash, pendingReceipt]);
@@ -118,17 +120,16 @@ export default function Home() {
       functionName: 'state',
     });
     const toDisplay = (data as any).toString();
-    console.log(toDisplay);
     setContractState(toDisplay);
   };
 
   const account = suaveWallet?.account.address;
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+    <main className="flex min-h-screen flex-col items-center justify-between p-10 lg:p-24">
       <Header />
-      <div className="flex flex-col gap-4 lg:flex-row w-[1024px]">
-        <div className="flex-auto border border-gray-300 bg-gradient-to-b from-zinc-200 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 lg:rounded-xl p-10">
+      <div className="flex flex-col gap-4 lg:flex-row w-full lg:w-[1024px] mt-8">
+        <div className="flex-auto border border-gray-300 bg-gradient-to-b from-zinc-200 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 rounded-xl p-10">
           <p className='text-2xl font-bold mt-4 mb-8'>
             Account Actions
           </p>
@@ -139,7 +140,7 @@ export default function Home() {
                 <code>{suaveWallet.account.address ? `${account.slice(0, 6)}...${account.slice(-4)}` : 'Not connected'}</code>
               </div> :
               <button
-                className='border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30'
+                className='border border-black rounded-lg bg-black text-white p-2 md:p-4'
                 onClick={connectWallet}
               >
                 Connect Wallet
@@ -151,7 +152,7 @@ export default function Home() {
           {account && (
             <div className="relative flex my-8">
               <button
-                className='border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30'
+                className='border border-black rounded-lg bg-black text-white p-2 md:p-4'
                 onClick={getFunds}
               >
                 Get Funds
@@ -160,7 +161,7 @@ export default function Home() {
           )}
         </div>
 
-        <div className="flex-auto border border-gray-300 bg-gradient-to-b from-zinc-200 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 lg:rounded-xl p-10">
+        <div className="flex-auto border border-gray-300 bg-gradient-to-b from-zinc-200 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 rounded-xl p-10">
           <p className='text-2xl font-bold mt-4 mb-8'>
             Contract Actions
           </p>
@@ -172,7 +173,7 @@ export default function Home() {
                 <div className='border border-gray-300 rounded-xl mx-2 my-4 p-4 w-full'>
                   <p className='text-l font-bold'>Use callback</p>
                   <button
-                    className='mt-4 border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30'
+                    className='border border-black rounded-lg bg-black text-white p-2 md:p-4 my-4'
                     onClick={sendExample}
                   >
                     example()
@@ -181,7 +182,7 @@ export default function Home() {
                 <div className='border border-gray-300 rounded-xl mx-2 my-4 p-4 w-full'>
                   <p className='text-l font-bold'>Change directly</p>
                   <button
-                    className='mt-4 border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30'
+                    className='border border-black rounded-lg bg-black text-white p-2 md:p-4 my-4'
                     onClick={sendNilExample}
                   >
                     nilExample()
@@ -189,30 +190,32 @@ export default function Home() {
                 </div>
               </div>
               <div>
-                <button
-                  className='mt-4 border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30'
-                  onClick={fetchState}
+                <p
+                  className='mt-4 border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl static w-auto rounded-xl border bg-gray-200 p-4'
                 >
                   State: {contractState}
-                </button>
+                </p>
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {hash && <div>
-        <p>Funded wallet at tx hash {hash}</p>
-      </div>}
+      <div className='row'>
+        {hash && 
+          <div className='my-4 border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl static w-auto rounded-xl border bg-gray-200 p-4 w-full'>
+            <p>Funded wallet! Tx hash: <code>{hash.slice(0, 6)}...{hash.slice(-4)}</code></p>
+          </div>
+        }
 
-      {pendingReceipt && <div>
-        {/* TODO: animate the ellipsis */}
-        <p>Fund transaction {hash} pending...</p>
-      </div>}
+        {pendingReceipt && <div>
+          <p>Fund transaction <code>{hash.slice(0, 6)}...{hash.slice(-4)}</code> pending...</p>
+        </div>}
 
-      {receivedReceipt && <div>
-        <p>Confidential Compute Request {receivedReceipt.transactionHash} <span style={{ color: receivedReceipt.status === 'success' ? '#0f0' : '#f00' }}>{receivedReceipt.status}</span></p>
-      </div>}
+        {receivedReceipt && <div>
+          <p>Confidential Compute Request <code>{receivedReceipt.transactionHash.slice(0, 6)}...{receivedReceipt.transactionHash.slice(-4)}</code>{} <span style={{ color: receivedReceipt.status === 'success' ? '#0f0' : '#f00' }}>{receivedReceipt.status}</span></p>
+        </div>}
+      </div>
 
       <Links />
 
