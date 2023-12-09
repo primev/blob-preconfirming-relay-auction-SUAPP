@@ -14,7 +14,6 @@ export default function Header() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            By{' '}
             <Image
               src="/logo.png"
               alt="Flashbots Logo"
