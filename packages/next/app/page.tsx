@@ -1,40 +1,51 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { custom, formatEther, encodeFunctionData, Address } from 'viem';
+import { custom, formatEther, encodeFunctionData, getFunctionSelector, Address, CustomTransport, Hex } from 'viem';
 import { suaveRigil } from 'viem/chains';
-import { TransactionRequestSuave, TransactionReceiptSuave, SuaveTxTypes } from '../node_modules/viem/chains/suave/types'
+import type {
+  TransactionRequestSuave,
+  TransactionReceiptSuave,
+  TransactionSuave,
+  SuaveWallet,
+  SuaveProvider,
+} from '../node_modules/viem/chains/suave/types'; // must be a better way to do this
+
 import { deployedAddress } from '@/constants/addresses';
 import OnChainState from '../../forge/out/OnChainState.sol/OnChainState.json';
 import Header from '@/components/Header';
 import Links from '@/components/Links';
 
-
-// TODO: (for Brock) these types should be exported from suave-viem
-type SuaveWallet = ReturnType<typeof suaveRigil.newWallet>;
-type SuaveProvider = ReturnType<typeof suaveRigil.newPublicClient>;
-
 export default function Home() {
-  const [suaveWallet, setSuaveWallet] = useState<SuaveWallet>();
+  const [suaveWallet, setSuaveWallet] = useState<SuaveWallet<CustomTransport>>();
   const [balance, setBalance] = useState<string>();
-  const [provider, setProvider] = useState<SuaveProvider>();
-  const [hash, setHash] = useState('');
+  const [provider, setProvider] = useState<SuaveProvider<CustomTransport>>();
+  const [hash, setHash] = useState<Hex>();
   const [contractState, setContractState] = useState('');
-  const [pendingReceipt, setPendingReceipt] = useState<Promise<any>>();
+  const [pendingReceipt, setPendingReceipt] = useState<Promise<TransactionReceiptSuave>>();
   const [receivedReceipt, setReceivedReceipt] = useState<TransactionReceiptSuave>();
+  const [txResult, setTxResult] = useState<TransactionSuave>();
 
   useEffect(() => {
     if (provider) {
       fetchBalance();
+      fetchState();
     }
     if (pendingReceipt) {
       pendingReceipt.then((receipt) => {
+        console.log("txReceipt received:", receipt)
         setReceivedReceipt(receipt);
         setPendingReceipt(undefined);
-        fetchBalance();
-        fetchState();
+        if (!provider) {
+          console.warn("no provider detected...")
+          return
+        }
+        provider.getTransaction({ hash: receipt.transactionHash }).then((tx) => {
+          console.log("txResult received:", tx)
+          setTxResult(tx as TransactionSuave);
+        });
       });
     }
-  }, [suaveWallet, hash, pendingReceipt]);
+  }, [suaveWallet, hash, pendingReceipt, provider]);
 
   const connectWallet = async () => {
     const ethereum = window.ethereum
@@ -44,7 +55,7 @@ export default function Home() {
         setSuaveWallet(suaveRigil.newWallet({
           jsonRpcAccount: account as Address,
           transport: custom(ethereum),
-        }) as SuaveWallet)
+        }))
         const suaveProvider = suaveRigil.newPublicClient(custom(ethereum));
         setProvider(suaveProvider);
       } catch (error) {
@@ -92,7 +103,7 @@ export default function Home() {
       to: deployedAddress,
       gasPrice: 2000000000n,
       gas: 100000n,
-      type: SuaveTxTypes.ConfidentialRequest,
+      type: '0x43',
       chainId: 16813125, // chain id of local SUAVE devnet and Rigil
       data: encodeFunctionData({
         abi: OnChainState.abi,
@@ -202,7 +213,7 @@ export default function Home() {
       </div>
 
       <div className='row'>
-        {hash && 
+        {hash &&
           <div className='my-4 border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl static w-auto rounded-xl border bg-gray-200 p-4 w-full'>
             <p>Funded wallet! Tx hash: <code>{hash.slice(0, 6)}...{hash.slice(-4)}</code></p>
           </div>
@@ -213,9 +224,15 @@ export default function Home() {
         </div>}
 
         {receivedReceipt && <div>
-          <p>Confidential Compute Request <code>{receivedReceipt.transactionHash.slice(0, 6)}...{receivedReceipt.transactionHash.slice(-4)}</code>{} <span style={{ color: receivedReceipt.status === 'success' ? '#0f0' : '#f00' }}>{receivedReceipt.status}</span></p>
+          <p>Confidential Compute Request <code>{receivedReceipt.transactionHash.slice(0, 6)}...{receivedReceipt.transactionHash.slice(-4)}</code>{ } <span style={{ color: receivedReceipt.status === 'success' ? '#0f0' : '#f00' }}>{receivedReceipt.status}</span></p>
         </div>}
       </div>
+
+      {txResult && <div>
+        <p>
+          Confidential Compute Result <code style={{ color: txResult.confidentialComputeResult === getFunctionSelector('exampleCallback()') ? "#0f0" : "#f00" }}>{txResult.confidentialComputeResult}</code>
+        </p>
+      </div>}
 
       <Links />
 
