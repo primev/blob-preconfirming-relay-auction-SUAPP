@@ -151,7 +151,7 @@ export default function Home() {
                 <code>{suaveWallet.account.address ? `${account.slice(0, 6)}...${account.slice(-4)}` : 'Not connected'}</code>
               </div> :
               <button
-                className='border border-black rounded-lg bg-black text-white p-2 md:p-4'
+                className='border border-black rounded-lg bg-black text-white p-2 md:p-4 dark:bg-transparent dark:text-black'
                 onClick={connectWallet}
               >
                 Connect Wallet
@@ -163,7 +163,7 @@ export default function Home() {
           {account && (
             <div className="relative flex my-8">
               <button
-                className='border border-black rounded-lg bg-black text-white p-2 md:p-4'
+                className='border border-black rounded-lg bg-black text-white p-2 md:p-4 dark:bg-transparent dark:text-black'
                 onClick={getFunds}
               >
                 Get Funds
@@ -184,7 +184,7 @@ export default function Home() {
                 <div className='border border-gray-300 rounded-xl mx-2 my-4 p-4 w-full'>
                   <p className='text-l font-bold'>Use callback</p>
                   <button
-                    className='border border-black rounded-lg bg-black text-white p-2 md:p-4 my-4'
+                    className='border border-black rounded-lg bg-black text-white p-2 md:p-4 my-4 dark:bg-transparent dark:text-black'
                     onClick={sendExample}
                   >
                     example()
@@ -193,7 +193,7 @@ export default function Home() {
                 <div className='border border-gray-300 rounded-xl mx-2 my-4 p-4 w-full'>
                   <p className='text-l font-bold'>Change directly</p>
                   <button
-                    className='border border-black rounded-lg bg-black text-white p-2 md:p-4 my-4'
+                    className='border border-black rounded-lg bg-black text-white p-2 md:p-4 my-4 dark:bg-transparent dark:text-black'
                     onClick={sendNilExample}
                   >
                     nilExample()
@@ -202,7 +202,7 @@ export default function Home() {
               </div>
               <div>
                 <p
-                  className='mt-4 border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl static w-auto rounded-xl border bg-gray-200 p-4'
+                  className='mt-4 border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl static w-auto rounded-xl border bg-gray-200 p-4 dark:text-black'
                 >
                   State: {contractState}
                 </p>
