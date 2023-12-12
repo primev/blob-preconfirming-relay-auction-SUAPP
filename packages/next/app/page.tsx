@@ -2,13 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { custom, formatEther, encodeFunctionData, getFunctionSelector, Address, CustomTransport, Hex } from 'viem';
 import { suaveRigil } from 'viem/chains';
-import type {
+import { 
+  getSuaveWallet, 
+  getSuaveProvider,
+  SuaveWallet,
+  SuaveProvider,
   TransactionRequestSuave,
   TransactionReceiptSuave,
   TransactionSuave,
-  SuaveWallet,
-  SuaveProvider,
-} from '../node_modules/viem/chains/suave/types'; // must be a better way to do this
+} from 'viem/chains/utils'
 
 import { deployedAddress } from '@/constants/addresses';
 import OnChainState from '../../forge/out/OnChainState.sol/OnChainState.json';
@@ -52,11 +54,11 @@ export default function Home() {
     if (ethereum) {
       try {
         const [account] = await ethereum.request({ method: 'eth_requestAccounts' });
-        setSuaveWallet(suaveRigil.newWallet({
+        setSuaveWallet(getSuaveWallet({
           jsonRpcAccount: account as Address,
           transport: custom(ethereum),
         }))
-        const suaveProvider = suaveRigil.newPublicClient(custom(ethereum));
+        const suaveProvider = getSuaveProvider(custom(ethereum));
         setProvider(suaveProvider);
       } catch (error) {
         console.error("Error connecting to wallet:", error);
@@ -79,7 +81,7 @@ export default function Home() {
   const getFunds = async () => {
     // default funded key in local SUAVE devenv
     const privateKey = '0x91ab9a7e53c220e6210460b65a7a3bb2ca181412a8a7b43ff336b3df1737ce12';
-    const fundingWallet = suaveRigil.newWallet({ privateKey: privateKey, transport: custom(window.ethereum) });
+    const fundingWallet = getSuaveWallet({ privateKey: privateKey, transport: custom(window.ethereum) });
     const fundTx = {
       to: suaveWallet?.account.address,
       value: 1000000000000000000n,
