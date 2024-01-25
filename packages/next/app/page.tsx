@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { custom, formatEther, encodeFunctionData, getFunctionSelector, Address, CustomTransport, Hex } from 'viem';
-import { suaveRigil } from 'viem/chains';
+import { custom, formatEther, encodeFunctionData, getFunctionSelector, Address, CustomTransport, Hex } from '@flashbots/suave-viem';
 import { 
   getSuaveWallet, 
   getSuaveProvider,
@@ -10,7 +9,7 @@ import {
   TransactionRequestSuave,
   TransactionReceiptSuave,
   TransactionSuave,
-} from 'viem/chains/utils'
+} from '@flashbots/suave-viem/chains/utils'
 
 import { deployedAddress } from '@/constants/addresses';
 import OnChainState from '../../forge/out/OnChainState.sol/OnChainState.json';
@@ -222,7 +221,7 @@ export default function Home() {
         }
 
         {pendingReceipt && <div>
-          <p>Fund transaction <code>{hash.slice(0, 6)}...{hash.slice(-4)}</code> pending...</p>
+          <p>Fund transaction pending...</p>
         </div>}
 
         {receivedReceipt && <div>

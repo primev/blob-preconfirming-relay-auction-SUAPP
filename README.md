@@ -4,24 +4,12 @@ This repo will help you get started building a SUAPP with a modern frontend.
 
 ## Get Started
 
-First, you need to build [`suave-viem`](https://github.com/flashbots/suave-viem) yourself. Clone that repo and then use `bun` to do the following:
-
-```bash
-$ cd suave-viem
-$ bun install
-$ bun run build
-$ cd src/ && bun link
-```
-
-Now, clone this repo and install its dependencies (one of which is the `suave-viem` package we just built).
-
 **We recommend using node v20.10.0 and npm v10.2.3**:
 
 ```bash
 $ cd build-a-suapp
 $ yarn
 $ cd packages/forge/ && forge install
-$ cd ../../packages/next && bun link viem
 ```
 
 You should now be able to compile (and deploy) your contracts with:
