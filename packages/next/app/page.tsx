@@ -8,6 +8,7 @@ import {
   Address,
   CustomTransport,
   Hex,
+  encodeAbiParameters,
 } from '@flashbots/suave-viem';
 import {
   getSuaveWallet,
@@ -114,32 +115,88 @@ export default function Home() {
     setHash(sendRes);
   };
 
-  // const sendExample = async () => {
-  //   if (!provider || !suaveWallet) {
-  //     console.warn(`provider=${provider}\nsuaveWallet=${suaveWallet}`);
-  //     return;
-  //   }
-  //   const nonce = await provider.getTransactionCount({
-  //     address: suaveWallet.account.address,
-  //   });
-  //   const ccr: TransactionRequestSuave = {
-  //     confidentialInputs: '0x',
-  //     kettleAddress: '0xB5fEAfbDD752ad52Afb7e1bD2E40432A485bBB7F', // Use 0x03493869959C866713C33669cA118E774A30A0E5 on Rigil.
-  //     to: deployedAddress,
-  //     gasPrice: 2000000000n,
-  //     gas: 100000n,
-  //     type: '0x43',
-  //     chainId: 16813125, // chain id of local SUAVE devnet and Rigil
-  //     data: encodeFunctionData({
-  //       abi: OnChainState.abi,
-  //       functionName: 'example',
-  //     }),
-  //     nonce,
-  //   };
-  //   const hash = await suaveWallet.sendTransaction(ccr);
-  //   console.log(`Transaction hash: ${hash}`);
-  //   setPendingReceipt(provider.waitForTransactionReceipt({ hash }));
-  // };
+  const sendExample = async () => {
+    if (!provider || !suaveWallet) {
+      console.warn(`provider=${provider}\nsuaveWallet=${suaveWallet}`);
+      return;
+    }
+    const nonce = await provider.getTransactionCount({
+      address: suaveWallet.account.address,
+    });
+    const ccr: TransactionRequestSuave = {
+      confidentialInputs: '0x',
+      kettleAddress: '0xB5fEAfbDD752ad52Afb7e1bD2E40432A485bBB7F', // Use 0x03493869959C866713C33669cA118E774A30A0E5 on Rigil.
+      to: deployedAddress,
+      gasPrice: 2000000000n,
+      gas: 100000n,
+      type: '0x43',
+      chainId: 16813125, // chain id of local SUAVE devnet and Rigil
+      data: encodeFunctionData({
+        abi: OnChainState.abi,
+        functionName: 'example',
+      }),
+      nonce,
+    };
+    const hash = await suaveWallet.sendTransaction(ccr);
+    console.log(`Transaction hash: ${hash}`);
+    setPendingReceipt(provider.waitForTransactionReceipt({ hash }));
+  };
+
+  const sendDataRecord = async (suaveWallet: any) => {
+    // create sample transaction; won't land onchain, but will pass payload validation
+    const sampleTx = {
+      type: 'eip1559' as 'eip1559',
+      chainId: 5,
+      nonce: 0,
+      maxBaseFeePerGas: 0x3b9aca00n,
+      maxPriorityFeePerGas: 0x5208n,
+      to: '0x0000000000000000000000000000000000000000' as Address,
+      value: 0n,
+      data: '0xf00ba7' as Hex,
+    };
+
+    const signedTx = await suaveWallet.signTransaction(sampleTx);
+    console.log('signed  tx', signedTx);
+
+    const encodedBid = encodeAbiParameters(
+      [
+        {
+          components: [
+            { type: 'bytes32', name: 'id' },
+            { type: 'address', name: 'bidder' },
+            { type: 'uint256', name: 'bidAmount' },
+          ],
+          type: 'tuple',
+        },
+      ],
+      [
+        {
+          id: bid.id,
+          bidder: bid.bidder,
+          bidAmount: bid.bidAmount,
+        },
+      ]
+    );
+
+    // create dataRecord & send ccr
+    try {
+      const dataRecord = new MevShareRecord(
+        1n + (await goerliProvider.getBlockNumber()),
+        signedTx,
+        KETTLE_ADDRESS,
+        MevShareContract.address as Address,
+        suaveRigil.id
+      );
+      console.log(dataRecord);
+      const ccr = dataRecord.toConfidentialRequest();
+      const txHash = await suaveWallet.sendTransaction(ccr);
+      console.log('sendResult', txHash);
+      // callback with result
+      onSendDataRecord(txHash);
+    } catch (e) {
+      return onSendDataRecord('0x', e);
+    }
+  };
 
   const sendNilExample = async () => {
     alert(
