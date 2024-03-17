@@ -11,42 +11,42 @@ import "../src/SealedBidAuction.sol";
 contract SealedBidAuctionTest is Test, SuaveEnabled {
     SealedBidAuction sealedBidAuction;
 
-    // function testSubmitBid() public {
-    //     sealedBidAuction = new SealedBidAuction();
-    //     // Fund the test account with some ether
-    //     vm.deal(address(this), 5 ether);
+    function testSubmitBid() public {
+        sealedBidAuction = new SealedBidAuction();
+        // Fund the test account with some ether
+        vm.deal(address(this), 5 ether);
 
-    //     // Set the balance of the test account to ensure it has enough ETH
-    //     uint256 startingBalance = address(this).balance;
-    //     assertTrue(startingBalance >= 1 ether, "Test account should have at least 1 ether");
+        // Set the balance of the test account to ensure it has enough ETH
+        uint256 startingBalance = address(this).balance;
+        assertTrue(startingBalance >= 1 ether, "Test account should have at least 1 ether");
 
-    //     // Define a slot number for the bid
-    //     uint64 slotNumber = 1;
+        // Define a slot number for the bid
+        uint64 slotNumber = 1;
 
-    //     // Define a bid amount
-    //     uint256 bidAmount = 1 ether;
+        // Define a bid amount
+        uint256 bidAmount = 1 ether;
 
-    //         // Create a bid object
-    //     SealedBidAuction.Bid memory bid = SealedBidAuction.Bid({
-    //         id: 0x0, // The ID will be set in the contract
-    //         bidder: address(this), // The bidder's address
-    //         bidAmount: bidAmount // The amount of the bid
-    //     });
+            // Create a bid object
+        SealedBidAuction.Bid memory bid = SealedBidAuction.Bid({
+            id: 0x0, // The ID will be set in the contract
+            bidder: address(this), // The bidder's address
+            bidAmount: bidAmount // The amount of the bid
+        });
 
-    //         // Encode the bid as confidential inputs
-    //     bytes memory encodedBid = abi.encode(bid);
+            // Encode the bid as confidential inputs
+        bytes memory encodedBid = abi.encode(bid);
 
-    //     // Set the confidential inputs before calling submitBid
-    //     vm.prank(address(this));
-    //     // this.setConfidentialInputs(encodedBid);
+        // Set the confidential inputs before calling submitBid
+        vm.prank(address(this));
+        setConfidentialInputs(encodedBid);
 
-    //     // Submit a bid
-    //     sealedBidAuction.submitBid(slotNumber);
-    //     // vm.stopPrank();
+        // Submit a bid
+        sealedBidAuction.submitBid(slotNumber);
+        // vm.stopPrank();
 
-    //     // Check if an event was emitted to confirm the bid submission
-    //     // vm.expectEmit(true, true, true, true);
-    // }
+        // Check if an event was emitted to confirm the bid submission
+        // vm.expectEmit(true, true, true, true);
+    }
 
     function testGetLatestSlot() public {
         sealedBidAuction = new SealedBidAuction();

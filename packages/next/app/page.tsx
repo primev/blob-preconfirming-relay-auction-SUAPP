@@ -9,6 +9,7 @@ import {
   CustomTransport,
   Hex,
   encodeAbiParameters,
+  pad,
 } from '@flashbots/suave-viem';
 import {
   getSuaveWallet,
@@ -162,7 +163,7 @@ export default function Home() {
       ],
       [
         {
-          id: '0x0',
+          id: pad('0x0'),
           bidder: suaveWallet?.account.address,
           bidAmount: 1000000000000000000n,
         },
