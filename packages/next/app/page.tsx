@@ -115,49 +115,40 @@ export default function Home() {
     setHash(sendRes);
   };
 
-  const sendExample = async () => {
+  // const sendExample = async () => {
+  //   if (!provider || !suaveWallet) {
+  //     console.warn(`provider=${provider}\nsuaveWallet=${suaveWallet}`);
+  //     return;
+  //   }
+  //   const nonce = await provider.getTransactionCount({
+  //     address: suaveWallet.account.address,
+  //   });
+  //   const ccr: TransactionRequestSuave = {
+  //     confidentialInputs: '0x',
+  //     kettleAddress: '0xB5fEAfbDD752ad52Afb7e1bD2E40432A485bBB7F', // Use 0x03493869959C866713C33669cA118E774A30A0E5 on Rigil.
+  //     to: deployedAddress,
+  //     gasPrice: 2000000000n,
+  //     gas: 100000n,
+  //     type: '0x43',
+  //     chainId: 16813125, // chain id of local SUAVE devnet and Rigil
+  //     data: encodeFunctionData({
+  //       abi: OnChainState.abi,
+  //       functionName: 'example',
+  //     }),
+  //     nonce,
+  //   };
+  //   const hash = await suaveWallet.sendTransaction(ccr);
+  //   console.log(`Transaction hash: ${hash}`);
+  //   setPendingReceipt(provider.waitForTransactionReceipt({ hash }));
+  // };
+
+  const sendDataRecord = async () => {
     if (!provider || !suaveWallet) {
       console.warn(`provider=${provider}\nsuaveWallet=${suaveWallet}`);
       return;
     }
-    const nonce = await provider.getTransactionCount({
-      address: suaveWallet.account.address,
-    });
-    const ccr: TransactionRequestSuave = {
-      confidentialInputs: '0x',
-      kettleAddress: '0xB5fEAfbDD752ad52Afb7e1bD2E40432A485bBB7F', // Use 0x03493869959C866713C33669cA118E774A30A0E5 on Rigil.
-      to: deployedAddress,
-      gasPrice: 2000000000n,
-      gas: 100000n,
-      type: '0x43',
-      chainId: 16813125, // chain id of local SUAVE devnet and Rigil
-      data: encodeFunctionData({
-        abi: OnChainState.abi,
-        functionName: 'example',
-      }),
-      nonce,
-    };
-    const hash = await suaveWallet.sendTransaction(ccr);
-    console.log(`Transaction hash: ${hash}`);
-    setPendingReceipt(provider.waitForTransactionReceipt({ hash }));
-  };
 
-  const sendDataRecord = async (suaveWallet: any) => {
     // create sample transaction; won't land onchain, but will pass payload validation
-    const sampleTx = {
-      type: 'eip1559' as 'eip1559',
-      chainId: 5,
-      nonce: 0,
-      maxBaseFeePerGas: 0x3b9aca00n,
-      maxPriorityFeePerGas: 0x5208n,
-      to: '0x0000000000000000000000000000000000000000' as Address,
-      value: 0n,
-      data: '0xf00ba7' as Hex,
-    };
-
-    const signedTx = await suaveWallet.signTransaction(sampleTx);
-    console.log('signed  tx', signedTx);
-
     const encodedBid = encodeAbiParameters(
       [
         {
@@ -171,38 +162,56 @@ export default function Home() {
       ],
       [
         {
-          id: bid.id,
-          bidder: bid.bidder,
-          bidAmount: bid.bidAmount,
+          id: '0x0',
+          bidder: suaveWallet?.account.address,
+          bidAmount: 1000000000000000000n,
         },
       ]
     );
 
-    // create dataRecord & send ccr
-    try {
-      const dataRecord = new MevShareRecord(
-        1n + (await goerliProvider.getBlockNumber()),
-        signedTx,
-        KETTLE_ADDRESS,
-        MevShareContract.address as Address,
-        suaveRigil.id
-      );
-      console.log(dataRecord);
-      const ccr = dataRecord.toConfidentialRequest();
-      const txHash = await suaveWallet.sendTransaction(ccr);
-      console.log('sendResult', txHash);
-      // callback with result
-      onSendDataRecord(txHash);
-    } catch (e) {
-      return onSendDataRecord('0x', e);
-    }
+    const nonce = await provider.getTransactionCount({
+      address: suaveWallet.account.address,
+    });
+
+    const ccr: TransactionRequestSuave = {
+      confidentialInputs: encodedBid,
+      kettleAddress: '0xB5fEAfbDD752ad52Afb7e1bD2E40432A485bBB7F', // Use 0x03493869959C866713C33669cA118E774A30A0E5 on Rigil.
+      to: deployedAddress,
+      gasPrice: 2000000000n,
+      gas: 100000n,
+      type: '0x43',
+      chainId: 16813125, // chain id of local SUAVE devnet and Rigil
+      data: encodeFunctionData({
+        abi: SealedBidAuction.abi,
+        functionName: 'sendBid',
+      }),
+      nonce,
+    };
+
+    const hash = await suaveWallet.sendTransaction(ccr);
+    console.log(`Transaction hash: ${hash}`);
+    setPendingReceipt(provider.waitForTransactionReceipt({ hash }));
+
+    // const ccr: TransactionRequestSuave = {
+    //   type: '0x43',
+    //   chainId: 5,
+    //   nonce: 0,
+    //   gasPrice: 2000000000n,
+    //   gas: 100000n,
+    //   to: '0x0000000000000000000000000000000000000000' as Address,
+    //   value: 1000000000000000000n,
+    //   data: '0xf00ba7' as Hex,
+    //   kettleAddress: '0xB5fEAfbDD752ad52Afb7e1bD2E40432A485bBB7F',
+    //   confidentialInputs: encodedBid,
+    //   nonce
+    // };
   };
 
-  const sendNilExample = async () => {
-    alert(
-      'A confidential request fails if it tries to modify the state directly.'
-    );
-  };
+  // const sendNilExample = async () => {
+  //   alert(
+  //     'A confidential request fails if it tries to modify the state directly.'
+  //   );
+  // };
 
   const getLatestSlotNumber = async () => {
     if (!provider || !suaveWallet) {
@@ -294,12 +303,12 @@ export default function Home() {
               <div className="flex flex-col col-2 md:flex-row">
                 <div className="border border-gray-300 rounded-xl mx-2 my-4 p-4 w-full">
                   <p className="text-l font-bold">Use callback</p>
-                  {/* <button
+                  <button
                     className="border border-black rounded-lg bg-black text-white p-2 md:p-4 my-4 dark:bg-transparent dark:text-black"
-                    onClick={sendExample}
+                    onClick={sendDataRecord}
                   >
                     example()
-                  </button> */}
+                  </button>
                 </div>
                 <div className="border border-gray-300 rounded-xl mx-2 my-4 p-4 w-full">
                   <p className="text-l font-bold">Change directly</p>

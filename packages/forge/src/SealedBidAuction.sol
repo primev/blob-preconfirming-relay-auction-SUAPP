@@ -18,7 +18,7 @@ contract SealedBidAuction {
     using JSONParserLib for string;
     using JSONParserLib for JSONParserLib.Item;
 
-    // Data ID is the blocknumber of the auction
+    // Data ID is the slotNumber of the auction
     // The key is the name of the Relay
     // - data id per auction
     // - key the id of the bidder relay address
@@ -26,8 +26,8 @@ contract SealedBidAuction {
     // // bidreveal can be called by anyone which means that the allowed address confidentialRetrieve
     // use Suave.ANYALLOWED to allow anyone to peak - but revert if the auction isn't ended
 
-    // Bidders submit their bids confidentially for a specific blockNumber. 
-    // Each bid is associated with the blockNumber of the auction it is intended for.
+    // Bidders submit their bids confidentially for a specific slotNumber. 
+    // Each bid is associated with the slotNumber of the auction it is intended for.
     // function submitBid(uint64 slotNumber) external payable returns (string memory) {
     //     bytes memory confidentialInputs = Suave.confidentialInputs();
     //     Bid memory bid = abi.decode(confidentialInputs, (Bid));
@@ -158,51 +158,46 @@ contract SealedBidAuction {
     }
 
     // Iterate through stored bids and release the second highest one and select the originator of the highest one as the winner
-    // function releaseAuction(uint256 slotNumber) external {
-    //     require(Suave.isConfidential());
+    function releaseAuction(uint256 slotNumber) external {
+        require(Suave.isConfidential());
 
-    //     Suave.DataRecord[] memory allRecords = Suave.fetchDataRecords(slotNumber, "default:v0:sealedBids");
-    //     if (allRecords.length == 0) {
-    //         revert Suave.PeekerReverted(address(this), "no data records");
-    //     }
+        Suave.DataRecord[] memory bids = Suave.fetchDataRecords(slotNumber, "default:v0:sealedBids");
+        if (bids.length == 0) {
+            revert Suave.PeekerReverted(address(this), "no data records");
+        }
 
-    //     // Suave.DataRecord[] memory allRecords = Suave.fetchDataRecords(blockHeight, "default:v0:ethBundles");
-    //     // Get all bids
-    //     Suave.DataRecord[] memory bids = Suave.getRecords("sealedBidAuction");
+        // Find the highest bids
+        uint256 highestBid = 0;
+        uint256 secondHighestBid = 0;
+        address highestBidder;
+        for (uint256 i = 0; i < bids.length; i++) {
+            uint256 bidAmount = abi.decode(Suave.confidentialRetrieve(slotNumber, bids[i]), (uint256));
+            if (bidAmount > highestBid) {
+                secondHighestBid = highestBid;
+                highestBid = bidAmount;
+                highestBidder = bids[i];
+            } else if (bidAmount > secondHighestBid) {
+                secondHighestBid = bidAmount;
+            }
+        }
 
-    //     // Find the highest bid
-    //     uint256 highestBid = 0;
-    //     uint256 secondHighestBid = 0;
-    //     address highestBidder;
-    //     for (uint256 i = 0; i < RelayNames.length; i++) {
-    //         uint256 bidAmount = abi.decode(Suave.confidentialRetrieve(slotNumber, RelayNames[i]), (uint256));
-    //         if (bidAmount > highestBid) {
-    //             secondHighestBid = highestBid;
-    //             highestBid = bidAmount;
-    //             highestBidder = bids[i].owner;
-    //         } else if (bidAmount > secondHighestBid) {
-    //             secondHighestBid = bidAmount;
-    //         }
-    //     }
+        // Release the second highest bid
+        for (uint256 i = 0; i < bids.length; i++) {
+            uint256 bidAmount = abi.decode(Suave.confidentialRetrieve(slotNumber, bids[i]), (uint256));
+            if (bidAmount == secondHighestBid) {
+                Suave.confidentialRelease(slotNumber, bids[i]);
+            }
+        }
 
-    //     // Release the second highest bid
-    //     for (uint256 i = 0; i < bids.length; i++) {
-    //         uint256 bidAmount = abi.decode(Suave.confidentialRetrieve(blockNumber, RelayNames[i]), (uint256));
-    //         if (bidAmount == secondHighestBid) {
-    //             Suave.confidentialRelease(blockNumber, RelayNames[i]);
-    //         }
-    //     }
+        // Release the highest bid
+        for (uint256 i = 0; i < bids.length; i++) {
+            uint256 bidAmount = abi.decode(Suave.confidentialRetrieve(bids[i].id, "bidAmount"), (uint256));
+            if (bidAmount == highestBid) {
+                Suave.confidentialRelease(slotNumber, bids[i]);
+            }
+        }
 
-    //     // Release the highest bid
-    //     for (uint256 i = 0; i < bids.length; i++) {
-    //         uint256 bidAmount = abi.decode(Suave.confidentialRetrieve(bids[i].id, "bidAmount"), (uint256));
-    //         if (bidAmount == highestBid) {
-    //             Suave.confidentialRelease(blockNumber, RelayNames[i]);
-    //         }
-    //     }
-
-    //     // Announce the winner
-    //     emit WinnerAnnounced(highestBidder);
-    // }
-    
+        // Announce the winner
+        // emit WinnerAnnounced(highestBidder);
+    }
 }
