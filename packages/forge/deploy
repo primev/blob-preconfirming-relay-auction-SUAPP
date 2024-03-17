@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Run the deployment command and capture the output
-output=$(forge create --rpc-url http://localhost:8545 --legacy --private-key 0x91ab9a7e53c220e6210460b65a7a3bb2ca181412a8a7b43ff336b3df1737ce12 src/OnChainState.sol:OnChainState)
+output=$(forge create --rpc-url https://rpc.rigil.suave.flashbots.net --legacy --private-key 0x91ab9a7e53c220e6210460b65a7a3bb2ca181412a8a7b43ff336b3df1737ce12 src/SealedBidAuction.sol:SealedBidAuction)
 
 # Extract the Deployed address
 deployed_address=$(echo "$output" | grep 'Deployed to:' | awk '{print $3}')

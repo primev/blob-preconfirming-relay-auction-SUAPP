@@ -1,0 +1,3 @@
+[submodule "packages/forge/lib/suave-std"]
+	path = packages/forge/lib/suave-std
+	url = https://github.com/flashbots/suave-std
